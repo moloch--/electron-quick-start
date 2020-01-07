@@ -2,6 +2,8 @@
 const { app, BrowserWindow, protocol } = require('electron')
 const path = require('path')
 const AppProtocol = require('./app-protocol')
+const { session } = require('electron')
+
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -32,11 +34,20 @@ function createWindow () {
   })
 }
 
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
   protocol.registerBufferProtocol(AppProtocol.Scheme, AppProtocol.RequestHandler)
+
+  session.defaultSession.webRequest.onHeadersReceived((responseDetails, callback) => {
+    const { responseHeaders } = responseDetails;
+    delete responseHeaders["Access-Control-Allow-Origin"]
+    responseHeaders["Access-Control-Allow-Origin"] = "app://foo"
+    callback({ responseHeaders });
+  });
+
   createWindow()
 })
 
