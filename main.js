@@ -2,6 +2,7 @@
 const { app, BrowserWindow, protocol } = require('electron')
 const path = require('path')
 const AppProtocol = require('./app-protocol')
+const App2Protocol = require('./app2-protocol')
 const { session } = require('electron')
 
 
@@ -20,7 +21,7 @@ function createWindow () {
   })
 
   // and load the index.html of the app.
-  mainWindow.loadFile('index.html')
+  mainWindow.loadURL('app2://bar/index.html')
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()
@@ -40,25 +41,25 @@ function createWindow () {
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
   protocol.registerBufferProtocol(AppProtocol.Scheme, AppProtocol.RequestHandler)
-
-  session.defaultSession.webRequest.onHeadersReceived((responseDetails, callback) => {
-    const { responseHeaders } = responseDetails;
-    delete responseHeaders["Access-Control-Allow-Origin"]
-    responseHeaders["Access-Control-Allow-Origin"] = "app://foo"
-    callback({ responseHeaders });
-  });
-
+  protocol.registerBufferProtocol(App2Protocol.Scheme, App2Protocol.RequestHandler)
   createWindow()
 })
 
 protocol.registerSchemesAsPrivileged([{
-  scheme: 'app',
+  scheme: AppProtocol.Scheme,
   privileges: { 
     standard: true,
     secure: true,
     corsEnabled: false,
   }
-}])
+ }, {
+  scheme: App2Protocol.Scheme,
+  privileges: { 
+    standard: true,
+    secure: true,
+    corsEnabled: false,
+  }
+ }])
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {
